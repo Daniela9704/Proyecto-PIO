@@ -1,5 +1,6 @@
 import os
 
+#se crea una lista con los productos de la joyeria -------- Diccionario con nombre, precio y cantidad 
 productos = [
     {"nombre": "anillo de oro", "precio": 15000, "cantidad": 10},
     {"nombre": "anillo de plata", "precio": 5000, "cantidad": 15},
@@ -9,58 +10,82 @@ productos = [
 
 carrito = []
 
-def limpiar_pantalla():
-    if os.name == 'nt':
-        os.system('cls')  # Windows
-    else:
-        os.system('clear')  # Linux o Mac
-
-def mostrar_mensaje_error():
-    input("Opción no válida. Presiona Enter para continuar...")
-    limpiar_pantalla()
-
+#esta funcion sirve para mostrar los productos disponibles de la joyeria
 def mostrar_productos():
 
     print("--------------------------/Menú de productos/---------------------------")
     for i, producto in enumerate(productos):
-        print(f"{i+1}. {producto["nombre"]} - precio ${producto["precio"]} - disponibles {producto["cantidad"]}")
+        print(f"{i+1}. {producto["nombre"]} - Precio: ${producto["precio"]} - Disponibles: {producto["cantidad"]}")
 
+
+#esta funcion sirve para agregar los productos de la lista al carrito
 def agregar_al_carrito():
     mostrar_productos()
-
     try:
-        opcion = int(input("Seleccione el producto que desea agregar al carrito: "))
+        opcion = int(input("Seleccione el número del producto que desea agregar al carrito: "))
         if 1 <= opcion <= len(productos):
-            cantidad = int(input("Ingrese la cantidad de productos que desea comprar: "))
-            producto = productos[opcion-1]
-            if cantidad > producto["cantidad"]:
-                print("No hay suficientes existencias en stock")
+            producto = productos[opcion - 1]
+            #sirve para mirar si el producto esta agotado
+            if producto['cantidad'] == 0:
+                print(f"Lo sentimos, {producto['nombre']} está agotado.")
+                return
+            cantidad = int(input(f"Ingrese la cantidad de '{producto['nombre']}' que desea comprar: "))
+            if cantidad <= 0:
+                print("La cantidad debe ser un número positivo.")
+                #sirve para mirar si la cantidad que pide el usuario es mayor a la cantidad disponible
+            elif cantidad > producto['cantidad']:
+                print(f"No hay suficientes existencias de {producto['nombre']}. Disponibles: {producto['cantidad']}")
             else:
-                producto["cantidad"] -= cantidad
-                carrito.append({"nombre": producto["nombre"], "precio": producto["precio"], "cantidad": cantidad})
-                print(f"Felicidades, has añadido {cantidad} {producto["nombre"]} exitosamente")
+                # Verificar si el producto ya está en el carrito y de ser asi solo aumenta la cantidad 
+                for i in carrito:
+                    if i['nombre'] == producto['nombre']:
+                        i['cantidad'] += cantidad
+                        print(f"Se han añadido {cantidad} unidades más de {producto['nombre']} al carrito.")
+                        break
+                else:
+                    #agrega el producto si no estaba en el carrito
+                    carrito.append({
+                        "nombre": producto['nombre'],
+                        "precio": producto['precio'],
+                        "cantidad": cantidad
+                    })
+                    print(f"{cantidad} unidades de {producto['nombre']} han sido añadidas al carrito.")
+        else:
+            print("Opción inválida. Por favor, seleccione un número válido del menú.")
     except ValueError:
-        print("Entrada inválida, por favor ingrese un número")
-    except Exception as e:
-        print(f"Se ha presentado un error: {e}")
+        print("Entrada inválida. Por favor, ingrese un número.")
+
 
 def mostrar_carrito():
     if carrito:
+        total = sum(i["precio"] * i["cantidad"] for i in carrito) #realiza el total de la compra
         print("--------------------------/Carrito/---------------------------")
-        for item in carrito:
-            print(f"{item['nombre']} - precio ${item['precio']} - cantidad {item['cantidad']}")
+        #sirve para mostrar los producto agregados al carrito
+        for i in carrito:
+            print(f"{i['nombre']} - precio ${i['precio']} - cantidad {i['cantidad']}")
+        print(f"El total de tu compra es:  ${total}")
     else:
         print("El carrito está vacío")
 
+#muestra los productos agregados al carrito y su total y le pregunta al usuario si desea realizar su compra o no 
 def finalizar_compra():
     if carrito:
-        total = sum(item["precio"] * item["cantidad"] for item in carrito)
-        print(f"El total de tu compra es: ${total}")
-        print("Gracias por tu compra")
-        carrito.clear()
+        mostrar_carrito()
+        confirmacion = input("¿Desea confirmar la compra? (s/n): ").strip().lower()
+        if confirmacion == 's':
+            #ajusta la cantidad disponible en el inventario despues de la compra
+            for i in carrito:
+                for producto in productos:
+                    if producto['nombre'] == i['nombre']:
+                        producto['cantidad'] -= i['cantidad']
+            print("compra finalizada exitosamente ¡Gracias por su compra!")
+            carrito.clear()#pone el carrito en blanco para dejarlo listo para otra compra
+        else:
+            print("La compra ha sido cancelada")
     else:
-        print("El carrito está vacío")
+        print("No hay productos en el carrito, Agreguelos antes de finalizar la compra.")
 
+#menu que tiene le muestra al usuario las opciones que puede escoger para realizar su compra
 def main():
     while True:   
         print("--------------------------/////---------------------------")
@@ -83,9 +108,8 @@ def main():
             elif selection == 4:
                 finalizar_compra()
             elif selection == 5:
+                print("Saliendo.......")
                 break
-            else:
-                mostrar_mensaje_error()
         except ValueError:
             print("Entrada invalida, por favor ingrese un número")
         except Exception as e:
